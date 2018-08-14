@@ -1,50 +1,18 @@
 clear;
 clc;
 
-all_curr = load('../29-ArmDataCollection/trainData/dataCur.txt');
-phi_mat = load('../20-ParametricIdentification-7DOF/trainOutput/phi.txt');
-% beta_k contains Mass and COM parameters that we estimated from COM experiments
-% Treating these values as known (beta_k)
-beta_k = load('betaK.txt');
-[row, col] = size(all_curr);
+curr = load('../../29-ArmDataCollection/trainData/dataCur.txt');
+phi = load('../../20-ParametricIdentification-7DOF/trainOutput/phi.txt');
+combeta = load('convergedBetaVector104PosesHardwareTrained.txt');
+betaKnown = combeta(21:48); % treating masses and CoMs as known
+km = [31.4e-3, 31.4e-3, 38e-3, 38e-3, 16e-3, 16e-3, 16e-3]';
+G_R = [596, 596, 625, 625, 552, 552, 552]';
 
-% Create holder for all_torques
-all_torque = all_curr*0;
+torques = reshape((curr(2:end,:)*diag(km)*diag(G_R))',[],1);
+k = reshape([1:13:91; 2:13:91; 3:13:91; 4:13:91], [], 1);
+u = reshape([5:13:91; 6:13:91; 7:13:91; 8:13:91; 9:13:91; 10:13:91; 11:13:91; 12:13:91; 13:13:91], [], 1);
+phiKnown = phi(:,k)
 
-W=[];
-T=[];
-
-% km = zeros(7,1);
-km(1) = 31.4e-3;
-km(2) = 31.4e-3;
-km(3) = 38e-3;
-km(4) = 38e-3;
-km(5) = 16e-3;
-km(6) = 16e-3;
-km(7) = 16e-3;
-
-G_R(1) = 596;
-G_R(2) = 596;
-G_R(3) = 625;
-G_R(4) = 625;
-G_R(5) = 552;
-G_R(6) = 552;
-G_R(7) = 552;
-
-% Convert currents to torques
-for i = 1:row
-        all_torque(i,:) = all_curr(i,:).*km.*G_R;
-end
-
-% Stack <#datapoints> rows of <7> torques into one <7>*<#datapoints> column
-for i = 1:row
-   ta=all_torque(i,:)';
-   tau=[T;ta];
-   T=tau;
-end
-
-phi_k = [];
-phi_u = [];
 % Separate phi_k and phi_u out of phi_mat
 for i=1:13:91
    phi_k = [phi_k  phi_mat(:,i) phi_mat(:,i+1) phi_mat(:,i+2) phi_mat(:,i+3)];
